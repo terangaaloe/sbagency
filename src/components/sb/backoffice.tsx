@@ -2,7 +2,7 @@
 /* backoffice — Espace authentifié (super-admin + agent partenaire) */
 import { useState } from "react";
 import { Icon } from "./icons";
-import { tenantUrl } from "@/lib/domains";
+import { tenantUrl, tenantLabel, ROOT_DOMAIN, WILDCARD_SUBDOMAINS } from "@/lib/domains";
 import { Magnetic, QR } from "./primitives";
 import { LineChart, BarChart, KPI } from "./charts";
 import { Switch } from "@/components/ui/switch";
@@ -404,7 +404,7 @@ function SuperDash({ agencies, onEdit }: { agencies: RankingRow[]; onEdit: (r: R
                 <td className="mono">{String(i + 1).padStart(2, "0")}</td>
                 <td style={{ fontWeight: 500 }}>
                   {r.name}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--sb-gray-500)" }}>{r.slug}.structure-b.sn</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--sb-gray-500)" }}>{tenantLabel(r.slug)}</div>
                 </td>
                 <td>
                   <span className="tag-pill">{r.type}</span>
@@ -461,8 +461,8 @@ function AgentDash({ tenant, onPreview }: { tenant: Tenant; onPreview: () => voi
           </div>
           <div className="panel__body">
             <div className="qrcard" style={{ border: "1px solid var(--sb-gray-200)", margin: "0 auto", maxWidth: 220 }}>
-              <QR value={tenant.slug + ".structure-b.sn"} size={150} />
-              <span className="url">{tenant.slug}.structure-b.sn</span>
+              <QR value={tenantUrl(tenant.slug)} size={150} />
+              <span className="url">{tenantLabel(tenant.slug)}</span>
             </div>
             <button className="btn btn--block mt16" onClick={onPreview}>
               <Icon name="ext" /> Voir ma page publique
@@ -545,7 +545,7 @@ function AgencesScreen({ agencies, onEdit, onCreate }: { agencies: RankingRow[];
               </div>
               <div className="grow">
                 <div className="agcard__nm">{r.name}</div>
-                <div className="agcard__slug">{r.slug}.structure-b.sn</div>
+                <div className="agcard__slug">{tenantLabel(r.slug)}</div>
               </div>
               <span className={"tag-pill " + (r.isPublic ? "on" : "vendu")}>{r.isPublic ? "Active" : "Off"}</span>
             </div>
@@ -718,11 +718,11 @@ function AgencyEditor({
                     setSlugEdited(true);
                   }}
                 />
-                <span className="suffix">.structure-b.sn</span>
+                {WILDCARD_SUBDOMAINS && <span className="suffix">.{ROOT_DOMAIN}</span>}
                 <span className="ok">{conflict ? <Icon name="x" size={18} /> : <Icon name="check" size={18} />}</span>
               </div>
               <div className="errmsg" style={{ color: conflict ? "#000" : "var(--sb-gray-500)" }}>
-                {conflict ? `Sous-domaine ${conflict} — choisissez-en un autre.` : `Disponible · ${norm}.structure-b.sn · fallback /p/${norm}`}
+                {conflict ? `Sous-domaine ${conflict} — choisissez-en un autre.` : `Disponible · ${tenantLabel(norm)}`}
               </div>
             </div>
           </div>
@@ -784,8 +784,8 @@ function AgencyEditor({
             </div>
             <div className="panel__body" style={{ textAlign: "center" }}>
               <div className="qrcard" style={{ border: "1px solid var(--sb-gray-200)" }}>
-                <QR value={norm + ".structure-b.sn"} size={170} />
-                <span className="url">{norm}.structure-b.sn</span>
+                <QR value={tenantUrl(norm)} size={170} />
+                <span className="url">{tenantLabel(norm)}</span>
               </div>
               <div className="row gap8 mt16" style={{ justifyContent: "center" }}>
                 <button className="btn btn--sm btn--ghost">
@@ -893,8 +893,8 @@ function AgencyCreate({
           </p>
         </div>
         <div className="qrcard" style={{ border: "1px solid var(--sb-gray-200)", margin: "22px auto", maxWidth: 240 }}>
-          <QR value={created.slug + ".structure-b.sn"} size={160} />
-          <span className="url">{created.slug}.structure-b.sn</span>
+          <QR value={tenantUrl(created.slug)} size={160} />
+          <span className="url">{tenantLabel(created.slug)}</span>
         </div>
         <div className="row gap12" style={{ justifyContent: "center" }}>
           <Magnetic strength={0.2}>
@@ -979,11 +979,11 @@ function AgencyCreate({
                     setSlugEdited(true);
                   }}
                 />
-                <span className="suffix">.structure-b.sn</span>
+                {WILDCARD_SUBDOMAINS && <span className="suffix">.{ROOT_DOMAIN}</span>}
                 <span className="ok">{conflict ? <Icon name="x" size={18} /> : <Icon name="check" size={18} />}</span>
               </div>
               <div className="errmsg" style={{ color: conflict ? "#000" : "var(--sb-gray-500)" }}>
-                {conflict ? `Sous-domaine ${conflict} — choisissez-en un autre.` : `Disponible · ${norm || "—"}.structure-b.sn · fallback /p/${norm || "—"}`}
+                {conflict ? `Sous-domaine ${conflict} — choisissez-en un autre.` : `Disponible · ${norm ? tenantLabel(norm) : "—"}`}
               </div>
             </div>
           </div>
@@ -1045,8 +1045,8 @@ function AgencyCreate({
             </div>
             <div className="panel__body" style={{ textAlign: "center" }}>
               <div className="qrcard" style={{ border: "1px solid var(--sb-gray-200)" }}>
-                <QR value={(norm || "structure-b") + ".structure-b.sn"} size={170} />
-                <span className="url">{norm || "—"}.structure-b.sn</span>
+                <QR value={tenantUrl(norm || "apercu")} size={170} />
+                <span className="url">{norm ? tenantLabel(norm) : "—"}</span>
               </div>
             </div>
           </div>
@@ -1307,7 +1307,7 @@ function MaPageScreen({ tenant, onPreview, onToggleTenant }: { tenant: Tenant; o
           <div className="assignrow" style={{ borderColor: tenant.isPublic ? "#000" : "var(--sb-gray-200)" }}>
             <Icon name="globe" />
             <div>
-              <div className="nm">{tenant.slug}.structure-b.sn</div>
+              <div className="nm">{tenantLabel(tenant.slug)}</div>
               <div className="meta">{tenant.isPublic ? "Visible publiquement · SSL actif" : "Désactivée — écran « Page indisponible »"}</div>
             </div>
             <Switch className="sb-switch" style={{ marginLeft: "auto" }} checked={tenant.isPublic} onCheckedChange={onToggleTenant} aria-label="Activer la page publique" />
@@ -1355,8 +1355,8 @@ function MaPageScreen({ tenant, onPreview, onToggleTenant }: { tenant: Tenant; o
           </div>
           <div className="panel__body" style={{ textAlign: "center" }}>
             <div className="qrcard" style={{ border: "1px solid var(--sb-gray-200)" }}>
-              <QR value={tenant.slug + ".structure-b.sn"} size={180} />
-              <span className="url">{tenant.slug}.structure-b.sn</span>
+              <QR value={tenantUrl(tenant.slug)} size={180} />
+              <span className="url">{tenantLabel(tenant.slug)}</span>
             </div>
             <button className="btn btn--block mt16" onClick={onPreview}>
               <Icon name="ext" /> Voir ma page
